@@ -1,0 +1,470 @@
+/* =============================================================
+   Twistlab — Estilos globales (Fase 2 · motor multipuzzle)
+   Tema oscuro moderno, paneles translúcidos, controles compactos.
+   ============================================================= */
+
+:root {
+    --bg-0: #0f1115;
+    --bg-1: #161922;
+    --bg-2: #1d2230;
+    --panel: rgba(20, 24, 34, 0.78);
+    --panel-border: rgba(255, 255, 255, 0.07);
+    --text: #e8ecf3;
+    --text-dim: #8b95a8;
+    --accent: #4f8cff;
+    --accent-hover: #6aa1ff;
+    --success: #34d399;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+
+    --cube-U: #f5f5f5;
+    --cube-D: #ffd500;
+    --cube-F: #009b48;
+    --cube-B: #0046ad;
+    --cube-R: #b71234;
+    --cube-L: #ff5800;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+
+    --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: radial-gradient(ellipse at top, #1c2231 0%, #0b0d12 70%);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    position: relative;
+}
+
+/* Canvas 3D: capa base */
+#cube-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 0;
+    cursor: grab;
+}
+#cube-canvas:active { cursor: grabbing; }
+
+/* =============================================================
+   Topbar (título + selector de dimensión)
+   ============================================================= */
+.topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(to bottom, rgba(11, 13, 18, 0.85), transparent);
+    pointer-events: none;
+}
+.topbar > * { pointer-events: auto; }
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+}
+.brand .logo {
+    color: var(--accent);
+    font-size: 22px;
+    line-height: 1;
+}
+.brand .title { font-size: 17px; letter-spacing: 0.3px; }
+.score {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--warning);
+    background: var(--bg-2);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 3px 10px;
+    margin-left: 6px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Las tres mejores carreras, al lado de los puntos. En una sola línea y con
+   cifras tabulares: es una tabla diminuta, y si las cifras bailan al cambiar
+   deja de leerse como tabla. */
+.best {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: var(--bg-2);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 3px 9px;
+    margin-left: 5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.best .top { color: var(--warning); }
+
+/* El aviso de los puntos que acaba de sumar un movimiento. Dura lo que dura la
+   animación y se va: es una palmadita, no información que haya que leer. */
+.score.gained {
+    animation: score-pop 420ms ease-out;
+}
+@keyframes score-pop {
+    0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(240, 180, 41, 0.55); }
+    35%  { transform: scale(1.14); box-shadow: 0 0 0 6px rgba(240, 180, 41, 0); }
+    100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(240, 180, 41, 0); }
+}
+
+/* Un botón que enciende y apaga algo dice en qué estado está, no qué hará.
+   `aria-pressed` es lo que ya lo cuenta al lector de pantalla, así que el
+   color sale de ahí mismo: no hay dos verdades que mantener a la vez. */
+.action-btn[aria-pressed="false"] {
+    opacity: 0.55;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+.brand .version {
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--bg-2);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 2px 8px;
+    margin-left: 4px;
+}
+
+.puzzle-selector {
+    display: flex;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-md);
+}
+.puzzle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+.puzzle-btn:hover { color: var(--text); }
+.puzzle-btn.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(79, 140, 255, 0.4);
+}
+
+/* =============================================================
+   Acciones globales (barra inferior central)
+   ============================================================= */
+.actions {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    padding: 8px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-lg);
+}
+
+.action-btn {
+    background: var(--bg-2);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+}
+.action-btn:hover:not(:disabled) {
+    background: #2a3142;
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+.action-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.action-btn.primary {
+    background: linear-gradient(135deg, var(--accent), #7c4dff);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+}
+.action-btn.primary:hover:not(:disabled) {
+    filter: brightness(1.1);
+}
+
+/* =============================================================
+   Panel de historial (esquina derecha)
+   ============================================================= */
+.history-panel {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    bottom: 90px;
+    width: 262px;
+    z-index: 10;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* La cabecera es el botón que pliega el panel: toda ella, no un icono
+   diminuto al que hay que apuntar. */
+.history-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 12px;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+.history-header:hover { background: rgba(255, 255, 255, 0.04); }
+.history-header .panel-title { flex: 1; margin: 0; }
+
+.history-count {
+    font-size: 11px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    color: var(--text-dim);
+    background: var(--bg-2);
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.history-chevron {
+    width: 8px;
+    height: 8px;
+    border-right: 1.5px solid var(--text-dim);
+    border-bottom: 1.5px solid var(--text-dim);
+    transform: rotate(-135deg);      /* apunta arriba: se puede plegar */
+    transition: transform 0.18s ease;
+}
+.history-header[aria-expanded="false"] .history-chevron { transform: rotate(45deg); }
+
+.history-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;                   /* sin esto la lista no encoge y desborda */
+    flex: 1;
+    padding: 0 12px 12px;
+}
+.history-header[aria-expanded="false"] + .history-body { display: none; }
+
+/* Plegado, el panel se queda en su cabecera. En escritorio está anclado
+   arriba y abajo, así que hay que soltarle el anclaje de abajo o deja un
+   hueco vacío del alto de la pantalla. */
+.history-panel[data-collapsed="true"] { bottom: auto; }
+
+/* Cuánto se ha recorrido de lo que hay guardado. Con una solución de
+   doscientos y pico movimientos, el contador solo no dice nada: esta barra sí
+   enseña de un vistazo por dónde va. */
+.history-progress {
+    height: 3px;
+    border-radius: 2px;
+    background: var(--bg-2);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.history-progress-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--success, #43d19e));
+    transition: width 0.18s ease;
+}
+
+.history-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-content: flex-start;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg-2) transparent;
+}
+.history-list::-webkit-scrollbar { width: 6px; }
+.history-list::-webkit-scrollbar-thumb {
+    background: var(--bg-2);
+    border-radius: 3px;
+}
+
+.history-empty {
+    /* Arriba del todo, no debajo de la lista: la lista se estira para ocupar
+       el panel, así que el mensaje acababa pegado al borde inferior, a medio
+       metro de donde mira quien acaba de abrir la app. Va con `order` y no
+       moviéndolo en el HTML para no perder el selector de hermanos que lo
+       esconde en cuanto hay movimientos. */
+    order: -1;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--text-dim);
+    margin: 0 0 4px;
+}
+.history-list:not(:empty) + .history-empty { display: none; }
+
+.history-item {
+    font-family: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 34px;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    background: var(--bg-2);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+.history-item:hover {
+    background: #2a3142;
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* Tres estados, y cada uno se lee sin tener que aprenderse un código:
+   lo ya hecho va sólido, lo que espera va apagado, y el punto donde estás
+   lleva el color de acento. */
+.history-item.done   { background: rgba(79, 140, 255, 0.14); color: var(--text); }
+.history-item.undone { background: transparent; color: var(--text-dim); opacity: 0.55; }
+.history-item.current {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+.history-item.last-applied {
+    box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.35);
+}
+
+/* =============================================================
+   Mensaje flotante (status)
+   ============================================================= */
+.status {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    z-index: 20;
+    background: var(--bg-2);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.status.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* =============================================================
+   Responsive (móvil)
+
+   En un teléfono el panel de la derecha se comía la pantalla y el cubo
+   quedaba detrás: no se veía lo único que importa. Aquí el historial deja de
+   flotar por el lado y se convierte en una TIRA sobre la barra de acciones —
+   una sola fila que se desliza en horizontal—, así que se puede ir paso a
+   paso mirando el puzzle, que es para lo que sirve.
+
+   Y se puede plegar: la cabecera entera es el botón. Plegado deja el cubo
+   entero a la vista y sigue enseñando el contador.
+
+   La condición NO es solo el ancho. Un móvil en horizontal mide 812 px de
+   ancho y 375 de alto: por ancho entraba en el diseño de escritorio, y ahí el
+   panel quedaba en una tira de 28 px. De ahí el `max-height`.
+   ============================================================= */
+@media (max-width: 768px), (max-height: 500px) {
+    :root {
+        --bar-actions: 46px;    /* alto de la barra de acciones */
+    }
+
+    .brand .title { font-size: 14px; }
+
+    /* Ocho puzzles no caben de ancho: se desliza en horizontal. */
+    .puzzle-selector {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .puzzle-selector::-webkit-scrollbar { display: none; }
+
+    .actions    { bottom: 8px; gap: 4px; padding: 5px; }
+    .action-btn { padding: 7px 9px; font-size: 11px; }
+
+    .history-panel {
+        top: auto;
+        left: 6px;
+        right: 6px;
+        width: auto;
+        bottom: calc(14px + var(--bar-actions));
+        z-index: 10;
+    }
+
+    .history-header { padding: 8px 10px; }
+    .history-body   { padding: 0 10px 10px; }
+
+    /* Una sola fila: los movimientos se van hacia la derecha y la tira
+       arrastra hasta el que toca. En vertical ocupaba media pantalla. */
+    .history-list {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+    }
+    .history-item { flex: 0 0 auto; padding: 6px 10px; font-size: 13px; }
+    .history-empty { font-size: 10px; }
+}

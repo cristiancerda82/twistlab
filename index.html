@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Twistlab — Rubik's Cube and 7 more twisty puzzles, in your browser</title>
+    <meta name="description" content="Twist a 3×3×3, a 4×4×4, a Pyraminx, a Megaminx and more in 3D. Step-by-step guides, and a solver that walks the 3×3×3 home move by move." />
+    <link rel="stylesheet" href="styles.css?v=f2b3d1ec" />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+    <!-- Tarjeta al compartir el enlace. `og:url` y `og:image` tienen que ser
+         absolutas: los rastreadores no resuelven rutas relativas. Cambia el
+         dominio si lo publicas en otro sitio. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Twistlab — Rubik's Cube and 7 more twisty puzzles" />
+    <meta property="og:description" content="Eight twisty puzzles in 3D, with solving guides and a 3×3×3 solver. No install, runs in the browser." />
+    <meta property="og:url" content="https://cristiancerda82.github.io/twistlab/" />
+    <meta property="og:image" content="https://cristiancerda82.github.io/twistlab/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- SDK de YouTube Playables. TIENE que cargarse antes que el código del
+         juego: lo exige su documentación, y el bundle va al final del body,
+         así que el orden sale solo.
+
+         Va entre marcas porque `npm run build` LO QUITA: es una petición
+         externa y bloqueante a youtube.com, y el sitio público no tiene por
+         qué esperar a otro servidor para arrancar — es justo lo que quitamos
+         al traernos Three.js al repositorio. Solo `npm run build:playables`
+         lo conserva. -->
+</head>
+<body>
+    <!-- Canvas 3D a pantalla completa -->
+    <canvas id="cube-canvas" aria-label="3D puzzle"></canvas>
+
+    <!-- Cabecera: título + selector de puzzle -->
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo">▣</span>
+            <span class="title">Twistlab</span>
+            <!-- Puntos por puzzles resueltos a mano. Estaba solo en un mensaje
+                 que duraba dos segundos: nadie se enteraba de que existían. -->
+            <span class="score" id="score" title="Points you earned yourself, turn by turn">0 pts</span>
+            <!-- Las tres mejores carreras. Sin ellas los puntos solo suben y
+                 no hay contra qué medirse. -->
+            <span class="best" id="best" title="Your three best runs" hidden></span>
+        </div>
+        <div class="puzzle-selector" role="tablist" aria-label="Puzzle type">
+            <button class="puzzle-btn"           data-puzzle="cube2"    data-always-on="true" aria-pressed="false">2×2</button>
+            <button class="puzzle-btn active"    data-puzzle="cube3"    data-always-on="true" aria-pressed="true">3×3</button>
+            <button class="puzzle-btn"           data-puzzle="cube4"    data-always-on="true" aria-pressed="false">4×4</button>
+            <button class="puzzle-btn"           data-puzzle="cube5"    data-always-on="true" aria-pressed="false">5×5</button>
+            <button class="puzzle-btn"           data-puzzle="pyraminx" data-always-on="true" aria-pressed="false">Pyraminx</button>
+            <button class="puzzle-btn"           data-puzzle="megaminx" data-always-on="true" aria-pressed="false">Megaminx</button>
+            <button class="puzzle-btn"           data-puzzle="cuboid221" data-always-on="true" aria-pressed="false">2×2×1</button>
+            <button class="puzzle-btn"           data-puzzle="cuboid331" data-always-on="true" aria-pressed="false">3×3×1</button>
+        </div>
+    </header>
+
+
+
+
+    <!-- Acciones globales (esquina inferior centro) -->
+    <div class="actions" role="toolbar" aria-label="Actions">
+        <button id="btn-undo"     class="action-btn" title="Undo (Ctrl+Z)">↶ Undo</button>
+        <button id="btn-redo"     class="action-btn" title="Redo (Ctrl+Y)">↷ Redo</button>
+        <button id="btn-shuffle"  class="action-btn" title="Scramble the puzzle">🎲 Scramble</button>
+        <button id="btn-labels"   class="action-btn" title="Show or hide the floating move buttons"
+                aria-pressed="true">🏷 Moves</button>
+        <button id="btn-reset"    class="action-btn" title="Back to a solved puzzle">⟲ Reset</button>
+        <!-- Tienen solucionador el 3×3×3 y el Megaminx: main.js lo esconde en
+             los demás. -->
+        <button id="btn-solve"    class="action-btn primary" title="Solve the puzzle">✨ Solve</button>
+    </div>
+
+    <!-- Historial. En escritorio es un panel a la derecha; en el móvil, una
+         tira que se desliza por encima de la barra de acciones. El mismo
+         marcado para los dos: lo que cambia es el CSS. -->
+    <aside class="history-panel" id="history-panel" aria-label="Move history">
+        <button class="history-header" id="history-toggle" data-always-on="true"
+                aria-expanded="true" aria-controls="history-body"
+                title="Show / hide the move history">
+            <h2 class="panel-title">History</h2>
+            <span id="history-count" class="history-count">0 / 0</span>
+            <span class="history-chevron" aria-hidden="true"></span>
+        </button>
+        <div class="history-body" id="history-body">
+            <div class="history-progress" aria-hidden="true">
+                <div class="history-progress-fill" id="history-progress"></div>
+            </div>
+            <div id="history-list" class="history-list" role="list"></div>
+            <p class="history-empty" id="history-empty">
+                Turn the puzzle — every move lands here, and you can tap one to travel back.
+            </p>
+        </div>
+    </aside>
+
+    <!-- Mensaje flotante (estado / errores) -->
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <!-- Punto de entrada como módulo ES6 -->
+    <script type="module" src="app.VY4NAMHD.js"></script>
+</body>
+</html>
