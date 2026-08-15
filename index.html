@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Twistlab — Rubik's Cube and 7 more twisty puzzles, in your browser</title>
     <meta name="description" content="Twist a 3×3×3, a 4×4×4, a Pyraminx, a Megaminx and more in 3D. Step-by-step guides, and a solver that walks the 3×3×3 home move by move." />
-    <link rel="stylesheet" href="styles.css?v=04b43c92" />
+    <link rel="stylesheet" href="styles.css?v=3a967323" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
     <!-- Tarjeta al compartir el enlace. `og:url` y `og:image` tienen que ser
@@ -40,19 +40,20 @@
             <!-- Puntos por puzzles resueltos a mano. Estaba solo en un mensaje
                  que duraba dos segundos: nadie se enteraba de que existían. -->
             <span class="score" id="score" title="Points you earned yourself, turn by turn">0 pts</span>
-            <!-- Las tres mejores carreras. Sin ellas los puntos solo suben y
-                 no hay contra qué medirse. -->
-            <span class="best" id="best" title="Your three best runs" hidden></span>
+            <!-- El cronometro mientras se resuelve, y las marcas del puzzle
+                 cuando no: mejor tiempo y media de 5, como en cualquier
+                 cronometro de cubos. -->
+            <span class="stats" id="stats" hidden></span>
         </div>
         <div class="puzzle-selector" role="tablist" aria-label="Puzzle type">
+                        <button class="puzzle-btn"           data-puzzle="cuboid221" data-always-on="true" aria-pressed="false">2×2×1</button>
             <button class="puzzle-btn"           data-puzzle="cube2"    data-always-on="true" aria-pressed="false">2×2</button>
+            <button class="puzzle-btn"           data-puzzle="cuboid331" data-always-on="true" aria-pressed="false">3×3×1</button>
             <button class="puzzle-btn active"    data-puzzle="cube3"    data-always-on="true" aria-pressed="true">3×3</button>
             <button class="puzzle-btn"           data-puzzle="cube4"    data-always-on="true" aria-pressed="false">4×4</button>
             <button class="puzzle-btn"           data-puzzle="cube5"    data-always-on="true" aria-pressed="false">5×5</button>
             <button class="puzzle-btn"           data-puzzle="pyraminx" data-always-on="true" aria-pressed="false">Pyraminx</button>
             <button class="puzzle-btn"           data-puzzle="megaminx" data-always-on="true" aria-pressed="false">Megaminx</button>
-            <button class="puzzle-btn"           data-puzzle="cuboid221" data-always-on="true" aria-pressed="false">2×2×1</button>
-            <button class="puzzle-btn"           data-puzzle="cuboid331" data-always-on="true" aria-pressed="false">3×3×1</button>
         </div>
     </header>
 
@@ -63,12 +64,9 @@
     <div class="actions" role="toolbar" aria-label="Actions">
         <button id="btn-undo"     class="action-btn" title="Undo (Ctrl+Z)"><span class="ico" aria-hidden="true">↶</span><span class="lbl">Undo</span></button>
         <button id="btn-redo"     class="action-btn" title="Redo (Ctrl+Y)"><span class="ico" aria-hidden="true">↷</span><span class="lbl">Redo</span></button>
-        <button id="btn-shuffle"  class="action-btn" title="Scramble the puzzle"><span class="ico" aria-hidden="true">🎲</span><span class="lbl">Scramble</span></button>
-        <button id="btn-labels"   class="action-btn" title="Show or hide the floating move buttons"
-                aria-pressed="true"><span class="ico" aria-hidden="true">🏷</span><span class="lbl">Moves</span></button>
+        <button id="btn-labels"   class="action-btn" title="Show or hide the floating move buttons" aria-pressed="true"><span class="ico" aria-hidden="true">🏷</span><span class="lbl">Moves</span></button>
         <button id="btn-reset"    class="action-btn" title="Back to a solved puzzle"><span class="ico" aria-hidden="true">⟲</span><span class="lbl">Reset</span></button>
-        <!-- Tienen solucionador el 3×3×3 y el Megaminx: main.js lo esconde en
-             los demás. -->
+        <button id="btn-shuffle"  class="action-btn" title="Scramble the puzzle"><span class="ico" aria-hidden="true">🎲</span><span class="lbl">Scramble</span></button>
         <button id="btn-solve"    class="action-btn primary" title="Solve the puzzle"><span class="ico" aria-hidden="true">✨</span><span class="lbl">Solve</span></button>
     </div>
 
@@ -98,6 +96,6 @@
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
     <!-- Punto de entrada como módulo ES6 -->
-    <script type="module" src="app.U7HZOBUC.js"></script>
+    <script type="module" src="app.UH7MGHLP.js"></script>
 </body>
 </html>

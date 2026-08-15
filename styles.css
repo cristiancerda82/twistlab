@@ -104,10 +104,9 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
-/* Las tres mejores carreras, al lado de los puntos. En una sola línea y con
-   cifras tabulares: es una tabla diminuta, y si las cifras bailan al cambiar
-   deja de leerse como tabla. */
-.best {
+/* El cronómetro y las marcas, al lado de los puntos. Cifras tabulares para que
+   no bailen: un reloj que cambia de ancho diez veces por segundo se lee fatal. */
+.stats {
     font-size: 11px;
     font-weight: 600;
     color: var(--text-dim);
@@ -119,7 +118,7 @@ body {
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
-.best .top { color: var(--warning); }
+.stats.running { color: var(--text); border-color: var(--accent); }
 
 /* El aviso de los puntos que acaba de sumar un movimiento. Dura lo que dura la
    animación y se va: es una palmadita, no información que haya que leer. */
@@ -473,17 +472,36 @@ body {
         white-space: nowrap;
     }
 
+    /* En el movil el panel es una tira sobre la barra de acciones: sin anclaje
+       arriba, para que crezca hacia arriba solo lo que necesite. Se le pone
+       tope de alto porque sin el, en un movil apaisado, una sesion larga tapaba
+       el puzzle entero. */
     .history-panel {
         top: auto;
         left: 6px;
         right: 6px;
         width: auto;
-        bottom: calc(14px + var(--bar-actions));
+        bottom: calc(12px + var(--bar-actions) + env(safe-area-inset-bottom, 0px));
+        max-height: 40vh;
         z-index: 10;
     }
 
+    /* Plegado se queda DONDE ESTABA, no se va arriba.
+
+       La regla de escritorio le quita el anclaje de abajo al plegarse, porque
+       alli esta anclado arriba y abajo a la vez y si no dejaria un hueco vacio
+       del alto de la pantalla. Pero aqui arriba no esta anclado: sin `bottom`
+       se quedaba sin ninguna referencia y caia a la posicion estatica, que es
+       lo alto del documento — encima del selector de puzzles, tapandolo. Se le
+       devuelve el anclaje de abajo, que es el unico que tiene sentido en una
+       tira que vive sobre la barra de acciones. */
+    .history-panel[data-collapsed="true"] {
+        top: auto;
+        bottom: calc(12px + var(--bar-actions) + env(safe-area-inset-bottom, 0px));
+    }
+
     .history-header { padding: 8px 10px; }
-    .history-body   { padding: 0 10px 10px; }
+    .history-body   { padding: 0 10px 10px; min-height: 0; overflow: hidden; }
 
     /* Una sola fila: los movimientos se van hacia la derecha y la tira
        arrastra hasta el que toca. En vertical ocupaba media pantalla. */
