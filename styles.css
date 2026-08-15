@@ -216,6 +216,8 @@ body {
     border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
 }
+.action-btn .ico { margin-right: 4px; }
+
 .action-btn:disabled {
     opacity: 0.35;
     cursor: not-allowed;
@@ -441,8 +443,35 @@ body {
     }
     .puzzle-selector::-webkit-scrollbar { display: none; }
 
-    .actions    { bottom: 8px; gap: 4px; padding: 5px; }
-    .action-btn { padding: 7px 9px; font-size: 11px; }
+    /* Seis botones no caben de ancho en un movil, y como la barra va centrada
+       con translateX(-50%) lo que sobra se corta por LOS DOS LADOS: se pierde
+       Undo por la izquierda y Solve por la derecha, que son justo los que se
+       buscan. Se limita al ancho de la pantalla y se desliza en horizontal,
+       igual que el selector de puzzles.
+
+       El `env(safe-area-inset-bottom)` es para los moviles con barra de gestos:
+       sin el, la fila se queda debajo de la raya del sistema y el ultimo boton
+       no se deja pulsar. */
+    .actions {
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+        gap: 4px;
+        padding: 5px;
+        max-width: calc(100vw - 12px);
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .actions::-webkit-scrollbar { display: none; }
+
+    /* Sin esto flexbox encoge los botones para que quepan, y el texto se parte
+       en dos lineas: la barra crece de alto y tapa el puzzle. */
+    .action-btn {
+        padding: 7px 9px;
+        font-size: 11px;
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
 
     .history-panel {
         top: auto;
@@ -467,4 +496,24 @@ body {
     }
     .history-item { flex: 0 0 auto; padding: 6px 10px; font-size: 13px; }
     .history-empty { font-size: 10px; }
+}
+
+/* Moviles estrechos (iPhone SE y compania): con seis botones ni deslizando se
+   ven todos de un vistazo, asi que se aprieta un poco mas.
+   Va AL FINAL a proposito: entre dos medias que empatan en especificidad manda
+   la ultima del fichero, y esta tiene que poder pisar a la de 768px. Puesta
+   antes, no hacia absolutamente nada. */
+@media (max-width: 400px) {
+    .actions    { gap: 2px; padding: 4px; }
+    .action-btn { padding: 7px 5px; font-size: 10px; }
+}
+
+/* Y en las pantallas de verdad estrechas, fuera los emoji. Son adorno: quien
+   mira la barra busca «Solve», no una varita. Cada uno ocupa unos trece
+   pixeles con su espacio, y seis emoji son justo los cuarenta que sobraban en
+   un movil de 320. Al reves -guardar el icono y quitar la palabra- se ahorra
+   mas, pero nadie sabe que hace una etiqueta ni una varita magica. */
+@media (max-width: 360px) {
+    .action-btn .ico { display: none; }
+    .action-btn .lbl { margin: 0; }
 }
