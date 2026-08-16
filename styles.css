@@ -330,7 +330,9 @@ body {
     flex-wrap: wrap;
     gap: 4px;
     align-content: flex-start;
-    padding-right: 4px;
+    /* Aire arriba y a la derecha para el número de etapa, que sobresale de su
+       ficha: con la lista recortando, se quedaba a medias. */
+    padding: 6px 6px 0 0;
     scrollbar-width: thin;
     scrollbar-color: var(--bg-2) transparent;
 }
@@ -367,6 +369,39 @@ body {
     cursor: pointer;
     transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
 }
+/* El primer movimiento de cada etapa de la solución.
+
+   Lleva su número en una esquina y un filo a la izquierda, que es lo que hace
+   que se vea la estructura de un vistazo: en una tira de trescientos
+   movimientos iguales, los cortes son la única forma de saber por dónde va el
+   método sin ponerse a contar. El número va en un pseudo-elemento y sale de
+   `data-stage`, así que el rótulo y el dato son el mismo sitio. */
+.history-item.stage-start {
+    position: relative;
+    border-left: 3px solid var(--accent);
+    padding-left: 7px;
+}
+.history-item.stage-start::after {
+    content: attr(data-stage);
+    position: absolute;
+    top: -5px;
+    right: -4px;
+    min-width: 13px;
+    height: 13px;
+    padding: 0 2px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 9px;
+    line-height: 13px;
+    text-align: center;
+    font-family: inherit;
+}
+/* Los que aún no se han pasado, con el filo apagado: el historial ya distingue
+   hecho de pendiente, y la etapa no debe deshacer esa distinción. */
+.history-item.stage-start.undone { border-left-color: var(--panel-border); }
+.history-item.stage-start.undone::after { background: var(--text-dim); }
+
 .history-item:hover {
     background: #2a3142;
     border-color: rgba(255, 255, 255, 0.18);
@@ -549,8 +584,12 @@ body {
     .history-list {
         flex-wrap: nowrap;
         overflow-x: auto;
+        /* `overflow-y: hidden` recortaría el número de etapa, que asoma por
+           arriba de su ficha. Con `visible` no se puede: el navegador obliga a
+           que un eje con scroll tenga el otro recortado, así que se le da aire
+           por arriba y se recorta más allá. */
         overflow-y: hidden;
-        padding-bottom: 2px;
+        padding: 8px 0 2px;
         -webkit-overflow-scrolling: touch;
     }
     .history-item { flex: 0 0 auto; padding: 6px 10px; font-size: 13px; }
