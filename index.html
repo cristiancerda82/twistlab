@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Twistlab — Rubik's Cube and 7 more twisty puzzles, in your browser</title>
     <meta name="description" content="Twist a 3×3×3, a 4×4×4, a Pyraminx, a Megaminx and more in 3D. Step-by-step guides, and a solver that walks the 3×3×3 home move by move." />
-    <link rel="stylesheet" href="styles.css?v=43dd61e0" />
+    <link rel="stylesheet" href="styles.css?v=daeb825d" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
     <!-- Tarjeta al compartir el enlace. `og:url` y `og:image` tienen que ser
@@ -40,20 +40,25 @@
             <!-- Puntos por puzzles resueltos a mano. Estaba solo en un mensaje
                  que duraba dos segundos: nadie se enteraba de que existían. -->
             <span class="score" id="score" title="Points you earned yourself, turn by turn">0 pts</span>
+            <!-- El selector de puzzle, al lado de los puntos. Fue una botonera
+                 de ocho, y en el movil se llevaba una fila entera de la
+                 cabecera: treinta pixeles de alto que ahora son del puzzle.
+                 Una lista desplegable dice lo mismo en el sitio de un boton. -->
+            <select id="puzzle-select" class="puzzle-select" data-always-on="true"
+                    aria-label="Puzzle type" title="Choose the puzzle">
+                <option value="cuboid221">2×2×1</option>
+                <option value="cube2">2×2×2</option>
+                <option value="cuboid331">3×3×1</option>
+                <option value="cube3">3×3×3</option>
+                <option value="cube4">4×4×4</option>
+                <option value="cube5">5×5×5</option>
+                <option value="pyraminx">Pyraminx</option>
+                <option value="megaminx">Megaminx</option>
+            </select>
             <!-- El cronometro mientras se resuelve, y las marcas del puzzle
                  cuando no: mejor tiempo y media de 5, como en cualquier
                  cronometro de cubos. -->
             <span class="stats" id="stats" hidden></span>
-        </div>
-        <div class="puzzle-selector" role="tablist" aria-label="Puzzle type">
-                        <button class="puzzle-btn"           data-puzzle="cuboid221" data-always-on="true" aria-pressed="false">2×2×1</button>
-            <button class="puzzle-btn"           data-puzzle="cube2"    data-always-on="true" aria-pressed="false">2×2</button>
-            <button class="puzzle-btn"           data-puzzle="cuboid331" data-always-on="true" aria-pressed="false">3×3×1</button>
-            <button class="puzzle-btn active"    data-puzzle="cube3"    data-always-on="true" aria-pressed="true">3×3</button>
-            <button class="puzzle-btn"           data-puzzle="cube4"    data-always-on="true" aria-pressed="false">4×4</button>
-            <button class="puzzle-btn"           data-puzzle="cube5"    data-always-on="true" aria-pressed="false">5×5</button>
-            <button class="puzzle-btn"           data-puzzle="pyraminx" data-always-on="true" aria-pressed="false">Pyraminx</button>
-            <button class="puzzle-btn"           data-puzzle="megaminx" data-always-on="true" aria-pressed="false">Megaminx</button>
         </div>
     </header>
 
@@ -95,7 +100,22 @@
     <!-- Mensaje flotante (estado / errores) -->
     <div id="status" class="status" role="status" aria-live="polite"></div>
 
+    <!-- Confirmación. Propia y no `window.confirm`: ese bloquea el hilo de la
+         página, y dentro de YouTube Playables o Playgama el juego vive en un
+         iframe donde un diálogo del navegador queda feo o directamente no
+         sale. Arranca oculto y solo se enseña cuando hay algo que confirmar. -->
+    <div id="confirm" class="confirm" hidden>
+        <div class="confirm-box" role="alertdialog" aria-modal="true"
+             aria-labelledby="confirm-text">
+            <p class="confirm-text" id="confirm-text"></p>
+            <div class="confirm-actions">
+                <button id="confirm-no"  class="action-btn" data-always-on="true">Cancel</button>
+                <button id="confirm-yes" class="action-btn primary" data-always-on="true">Reset</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Punto de entrada como módulo ES6 -->
-    <script type="module" src="app.QXJ7OGEX.js"></script>
+    <script type="module" src="app.3N4H5BYK.js"></script>
 </body>
 </html>

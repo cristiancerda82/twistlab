@@ -150,33 +150,37 @@ body {
     margin-left: 4px;
 }
 
-.puzzle-selector {
-    display: flex;
-    background: var(--panel);
+/* El selector de puzzle: una lista desplegable al lado de los puntos.
+
+   La flecha va pintada de fondo con un SVG en línea —nada de una imagen que
+   pedir al servidor— porque quitarle a un `select` su apariencia nativa
+   (`appearance: none`) le quita también la flecha, y sin ella no parece
+   desplegable. `padding-right` le deja el sitio. */
+.puzzle-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--bg-2);
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b95a8' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 9px 6px;
     border: 1px solid var(--panel-border);
-    border-radius: var(--radius-md);
-    padding: 4px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: var(--shadow-md);
-}
-.puzzle-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    padding: 6px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
+    border-radius: 999px;
+    color: var(--text);
+    font: inherit;
     font-size: 13px;
-    transition: all 0.15s ease;
+    font-weight: 600;
+    padding: 4px 26px 4px 12px;
+    margin-left: 6px;
+    cursor: pointer;
+    max-width: 42vw;
+    text-overflow: ellipsis;
 }
-.puzzle-btn:hover { color: var(--text); }
-.puzzle-btn.active {
-    background: var(--accent);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(79, 140, 255, 0.4);
-}
+.puzzle-select:hover { border-color: rgba(255, 255, 255, 0.18); }
+.puzzle-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+/* La lista desplegada la pinta el sistema, y ahí el fondo NO se hereda: sin
+   esto, en Windows salen opciones blancas sobre blanco. */
+.puzzle-select option { background: var(--bg-1); color: var(--text); }
 
 /* =============================================================
    Acciones globales (barra inferior central)
@@ -421,6 +425,24 @@ body {
     box-shadow: 0 0 0 2px rgba(79, 140, 255, 0.35);
 }
 
+/* El que TOCA, mientras se sigue una solución. Es el único de la tira que no
+   está ni hecho ni pendiente sin más: es el que hay que girar ahora, y por eso
+   se sale del código de tres estados con un color propio. */
+.history-item.next {
+    background: rgba(245, 158, 11, 0.16);
+    border-color: var(--warning);
+    color: var(--text);
+    opacity: 1;
+    animation: next-move 1.4s ease-in-out infinite;
+}
+@keyframes next-move {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+    50%      { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .history-item.next { animation: none; box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.6); }
+}
+
 /* =============================================================
    Mensaje flotante (status)
    ============================================================= */
@@ -463,6 +485,46 @@ body {
 }
 
 /* =============================================================
+   Confirmación
+
+   Tapa la pantalla entera a propósito: lo que pregunta es destructivo y no
+   debe poder contestarse sin querer con un toque en el cubo de detrás.
+   ============================================================= */
+.confirm {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(8, 10, 14, 0.62);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.confirm[hidden] { display: none; }
+
+.confirm-box {
+    max-width: 340px;
+    background: var(--bg-1);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 18px;
+}
+.confirm-text {
+    margin: 0 0 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+}
+.confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* =============================================================
    Responsive (móvil)
 
    En un teléfono el panel de la derecha se comía la pantalla y el cubo
@@ -485,30 +547,16 @@ body {
 
     .brand .title { font-size: 14px; }
 
-    /* La cabecera pasa a dos filas: arriba la marca con los puntos, y el
-       selector de puzzles ENTERO debajo.
-
-       Compartiendo fila, el selector se quedaba con 196 px de los 512 que
-       necesita: se veian tres puzzles y medio y los demas habia que adivinarlos
-       deslizando. Una fila entera son 375, y con los botones mas apretados
-       caben los ocho. Cuesta unos treinta pixeles de alto, que en un movil los
-       paga el fondo vacio de alrededor del puzzle, no el puzzle. */
+    /* Una sola fila. El selector era una botonera de ocho y se llevaba una
+       fila entera para él solo; en desplegable cabe al lado de los puntos, y
+       la cabecera vuelve a medir lo que mide su texto. */
     .topbar {
-        flex-wrap: wrap;
-        gap: 6px 0;
+        flex-wrap: nowrap;
+        gap: 6px;
         padding: 10px 12px;
     }
-    .brand { flex: 1 1 auto; min-width: 0; }
-
-    .puzzle-selector {
-        flex: 1 0 100%;
-        justify-content: space-between;
-        overflow-x: auto;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-    }
-    .puzzle-selector::-webkit-scrollbar { display: none; }
-    .puzzle-btn { padding: 6px 7px; font-size: 12px; }
+    .brand { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
+    .puzzle-select { font-size: 12px; padding: 4px 24px 4px 10px; }
 
     /* Seis botones no caben de ancho en un movil, y como la barra va centrada
        con translateX(-50%) lo que sobra se corta por LOS DOS LADOS: se pierde
@@ -604,7 +652,9 @@ body {
 @media (max-width: 400px) {
     .actions    { gap: 2px; padding: 4px; }
     .action-btn { padding: 8px 2px; font-size: 10px; }
-    .puzzle-btn { padding: 6px 6px; font-size: 11px; }
+    /* El nombre de la app se cae antes que el selector: quien mira ahí quiere
+       saber en qué puzzle está, no cómo se llama el juego. */
+    .brand .title { display: none; }
 }
 
 /* Y en las pantallas de verdad estrechas, fuera los emoji. Son adorno: quien
