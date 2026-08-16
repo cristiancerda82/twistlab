@@ -450,13 +450,30 @@ body {
 
     .brand .title { font-size: 14px; }
 
-    /* Ocho puzzles no caben de ancho: se desliza en horizontal. */
+    /* La cabecera pasa a dos filas: arriba la marca con los puntos, y el
+       selector de puzzles ENTERO debajo.
+
+       Compartiendo fila, el selector se quedaba con 196 px de los 512 que
+       necesita: se veian tres puzzles y medio y los demas habia que adivinarlos
+       deslizando. Una fila entera son 375, y con los botones mas apretados
+       caben los ocho. Cuesta unos treinta pixeles de alto, que en un movil los
+       paga el fondo vacio de alrededor del puzzle, no el puzzle. */
+    .topbar {
+        flex-wrap: wrap;
+        gap: 6px 0;
+        padding: 10px 12px;
+    }
+    .brand { flex: 1 1 auto; min-width: 0; }
+
     .puzzle-selector {
+        flex: 1 0 100%;
+        justify-content: space-between;
         overflow-x: auto;
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
     }
     .puzzle-selector::-webkit-scrollbar { display: none; }
+    .puzzle-btn { padding: 6px 7px; font-size: 12px; }
 
     /* Seis botones no caben de ancho en un movil, y como la barra va centrada
        con translateX(-50%) lo que sobra se corta por LOS DOS LADOS: se pierde
@@ -467,25 +484,33 @@ body {
        El `env(safe-area-inset-bottom)` es para los moviles con barra de gestos:
        sin el, la fila se queda debajo de la raya del sistema y el ultimo boton
        no se deja pulsar. */
+    /* La barra ocupa el ancho de la pantalla y los botones se lo reparten a
+       partes iguales. Centrada y del ancho de su contenido dejaba margenes
+       desiguales y obligaba a deslizar para llegar a Solve; asi cada boton cae
+       siempre en el mismo sitio, que es lo que el pulgar aprende.
+
+       El `env(safe-area-inset-bottom)` es para los moviles con barra de gestos:
+       sin el, la fila se queda debajo de la raya del sistema y el ultimo boton
+       no se deja pulsar. */
     .actions {
+        left: 6px;
+        right: 6px;
+        transform: none;
+        max-width: none;
         bottom: calc(8px + env(safe-area-inset-bottom, 0px));
         gap: 4px;
         padding: 5px;
-        max-width: calc(100vw - 12px);
-        overflow-x: auto;
-        overscroll-behavior-x: contain;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
     }
-    .actions::-webkit-scrollbar { display: none; }
 
-    /* Sin esto flexbox encoge los botones para que quepan, y el texto se parte
-       en dos lineas: la barra crece de alto y tapa el puzzle. */
+    /* `min-width: 0` no es adorno: sin el, un boton nunca encoge por debajo de
+       su texto y el reparto se rompe justo en el mas largo (Scramble). */
     .action-btn {
-        padding: 7px 9px;
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 8px 4px;
         font-size: 11px;
-        flex: 0 0 auto;
         white-space: nowrap;
+        justify-content: center;
     }
 
     /* En el movil el panel es una tira sobre la barra de acciones: sin anclaje
@@ -539,7 +564,8 @@ body {
    antes, no hacia absolutamente nada. */
 @media (max-width: 400px) {
     .actions    { gap: 2px; padding: 4px; }
-    .action-btn { padding: 7px 5px; font-size: 10px; }
+    .action-btn { padding: 8px 2px; font-size: 10px; }
+    .puzzle-btn { padding: 6px 6px; font-size: 11px; }
 }
 
 /* Y en las pantallas de verdad estrechas, fuera los emoji. Son adorno: quien
@@ -547,7 +573,7 @@ body {
    pixeles con su espacio, y seis emoji son justo los cuarenta que sobraban en
    un movil de 320. Al reves -guardar el icono y quitar la palabra- se ahorra
    mas, pero nadie sabe que hace una etiqueta ni una varita magica. */
-@media (max-width: 360px) {
+@media (max-width: 480px) {
     .action-btn .ico { display: none; }
     .action-btn .lbl { margin: 0; }
 }
