@@ -32,6 +32,40 @@
     --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
+/* =============================================================
+   Las franjas que el sistema se reserva
+   =============================================================
+
+   La barra de estado arriba, la de navegación o gestos abajo, el recorte de la
+   cámara donde toque. El juego dibuja por debajo de todas ellas —el puzzle
+   ocupa la pantalla entera— pero los CONTROLES no pueden vivir ahí: un botón
+   bajo la barra de estado se ve perfectamente y no se puede pulsar, porque el
+   toque lo intercepta el sistema antes de llegar a la página. Es el peor fallo
+   posible de una interfaz, porque parece que la aplicación está rota.
+
+   Hay dos fuentes posibles de esa medida y **ninguna sirve sola**:
+
+     env(safe-area-inset-*)   la del navegador. Viva en Safari sobre iPhone.
+                              Dentro del WebView de Android refleja el recorte
+                              de la cámara pero NO la barra de estado, así que
+                              ahí se queda corta justo donde más duele.
+
+     var(--inset-*)           la publica MainActivity con lo que dice el
+                              sistema. Exacta, y solo existe dentro de la
+                              aplicación Android.
+
+   De ahí `max()` y no una suma. Si en alguna versión del WebView resultara que
+   las dos están vivas a la vez, sumarlas dejaría el hueco al doble; con `max()`
+   da igual cuál conteste. Y en el escritorio contestan las dos con cero, que
+   es lo que deja la disposición exactamente como estaba.
+   ============================================================= */
+:root {
+    --safe-top:    max(env(safe-area-inset-top, 0px),    var(--inset-top, 0px));
+    --safe-right:  max(env(safe-area-inset-right, 0px),  var(--inset-right, 0px));
+    --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--inset-bottom, 0px));
+    --safe-left:   max(env(safe-area-inset-left, 0px),   var(--inset-left, 0px));
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -74,7 +108,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
+    /* El hueco de las barras va en el `padding` y NO en el `top`, y esa es toda
+       la gracia: el `padding` queda DENTRO de la caja de fondo, así que el velo
+       oscuro del degradado sigue empezando en el píxel cero y cubre la franja
+       de la barra de estado. Es lo que mantiene legibles el reloj y la batería
+       —que el sistema dibuja en blanco— cuando el jugador pone la cara blanca
+       del cubo justo debajo. Con `top` en vez de `padding`, el velo bajaría con
+       el contenido y dejaría los iconos blancos sobre lo que hubiera. */
+    padding:
+        calc(14px + var(--safe-top, 0px))
+        calc(20px + var(--safe-right, 0px))
+        14px
+        calc(20px + var(--safe-left, 0px));
     background: linear-gradient(to bottom, rgba(11, 13, 18, 0.85), transparent);
     pointer-events: none;
 }
@@ -86,11 +131,29 @@ body {
     gap: 10px;
     font-weight: 600;
 }
+/* El logo, que ahora es un boton y tiene que seguir sin parecerlo: mismo
+   cuadrado, mismo sitio, mismo color. Se le quita todo lo que un navegador le
+   pone a un `button` -fondo, borde, relleno, su propia tipografia- y se le deja
+   el cursor y el foco, que son lo unico que si tiene que anunciar. */
 .brand .logo {
     color: var(--accent);
     font-size: 22px;
     line-height: 1;
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
 }
+.brand .logo:hover { filter: brightness(1.25); }
+.brand .logo:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+/* Al pulsarlo se hunde un pelo: es la unica senal de que ha pasado algo, porque
+   lo que hace ocurre en el lienzo y no aqui. */
+.brand .logo:active { transform: scale(0.92); }
 .brand .title { font-size: 17px; letter-spacing: 0.3px; }
 .score {
     font-size: 12px;
@@ -150,44 +213,160 @@ body {
     margin-left: 4px;
 }
 
-/* El selector de puzzle: una lista desplegable al lado de los puntos.
+/* Texto solo para lectores de pantalla. El botón de silencio se ve como un
+   emoji, y un emoji no es un nombre: sin esto el lector lo anuncia como
+   «altavoz alto botón», o directamente como nada. */
+.sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
 
-   La flecha va pintada de fondo con un SVG en línea —nada de una imagen que
-   pedir al servidor— porque quitarle a un `select` su apariencia nativa
-   (`appearance: none`) le quita también la flecha, y sin ella no parece
-   desplegable. `padding-right` le deja el sitio. */
-.puzzle-select {
-    appearance: none;
-    -webkit-appearance: none;
-    background-color: var(--bg-2);
-    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b95a8' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 9px center;
-    background-size: 9px 6px;
+/* Los botones de icono de la cabecera: silenciar y la visita guiada.
+
+   Redondos y del tamaño de las pastillas que tienen al lado, para que la
+   cabecera siga leyéndose como una fila de cosas pequeñas y no como una barra
+   de herramientas. */
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-2);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    color: var(--text);
+    /* 28px es lo que mide de alto la fila de la cabecera. Es menos de los 48
+       que pide la guía de Android, y es deliberado: silenciar es una acción
+       rara y un blanco de 48 aquí obligaría a que la cabecera midiera el doble,
+       que es alto que le quitas al puzzle en cada partida. */
+    width: 28px; height: 28px;
+    padding: 0;
+    margin-left: 6px;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+.icon-btn:hover { border-color: rgba(255, 255, 255, 0.18); }
+.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.icon-btn .ico { margin: 0; }
+
+/* Solo del altavoz: el estado lo dice `aria-pressed`, igual que en el botón de
+   rótulos, y de ahí sale también el aspecto. No hay dos verdades que mantener,
+   y el lector de pantalla y el ojo cuentan lo mismo. */
+.sound-toggle[aria-pressed="false"] { opacity: 0.45; }
+
+/* El selector de puzzle: un menu propio, hermano del de idioma.
+
+   Deja de ser un `select` del sistema porque ninguno pinta imagenes dentro de
+   sus opciones, y sin imagen «Megaminx» no le dice nada a quien no lo conoce.
+   La contrapartida es que en el movil se pierde el selector nativo de Android;
+   se compensa con blancos de dedo grandes en las opciones. */
+.puzzle { position: relative; display: inline-flex; flex: 0 0 auto; margin-left: 6px; }
+
+.puzzle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-2);
     border: 1px solid var(--panel-border);
     border-radius: 999px;
     color: var(--text);
     font: inherit;
     font-size: 13px;
     font-weight: 600;
-    padding: 4px 26px 4px 12px;
-    margin-left: 6px;
+    padding: 4px 10px;
     cursor: pointer;
     max-width: 42vw;
-    text-overflow: ellipsis;
 }
-.puzzle-select:hover { border-color: rgba(255, 255, 255, 0.18); }
-.puzzle-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-/* La lista desplegada la pinta el sistema, y ahí el fondo NO se hereda: sin
-   esto, en Windows salen opciones blancas sobre blanco. */
-.puzzle-select option { background: var(--bg-1); color: var(--text); }
+.puzzle-btn:hover { border-color: rgba(255, 255, 255, 0.18); }
+.puzzle-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.puzzle-btn .pzname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* La flecha, dibujada con dos bordes girados: sin `select` ya no hay ninguna
+   que el sistema ponga, y un caracter no se alinea igual en los dos sistemas. */
+.puzzle-btn .pzchevron {
+    width: 6px; height: 6px;
+    margin-left: 1px;
+    border-right: 1.6px solid var(--text-dim);
+    border-bottom: 1.6px solid var(--text-dim);
+    transform: translateY(-2px) rotate(45deg);
+    flex: 0 0 auto;
+}
+.puzzle-btn[aria-expanded="true"] .pzchevron {
+    transform: translateY(1px) rotate(-135deg);
+}
+
+/* El icono del puzzle, en el boton y en cada opcion. `currentColor` en el SVG
+   hace que herede el color del texto y se apague con el, sin reglas aparte. */
+.pzico { display: block; line-height: 0; flex: 0 0 auto; }
+.pzico svg { display: block; width: 16px; height: 16px; }
+
+.puzzle-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    /* Colgado por la izquierda: este control vive a la izquierda de la
+       cabecera, y anclarlo a la derecha lo sacaria de la pantalla en un movil. */
+    left: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    /* Negro, no el panel translucido del menu de idioma: aqui debajo pasa el
+       puzzle girando, y a traves de un fondo translucido los ocho iconos se
+       leerian sobre lo que se estuviera moviendo. */
+    background: #05070d;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.puzzle-menu[hidden] { display: none; }
+
+.puzzle-option {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    /* Alto generoso: son ocho y se eligen con el pulgar. Es lo que compensa
+       haber dejado el selector nativo. */
+    padding: 8px 12px;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    text-align: left;
+}
+.puzzle-option:hover { background: var(--bg-2); }
+.puzzle-option:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.puzzle-option .pzico svg { width: 20px; height: 20px; }
+
+/* El que esta puesto. `aria-checked` es la unica verdad: de ahi sale el aspecto
+   y eso mismo es lo que anuncia un lector de pantalla. */
+.puzzle-option[aria-checked="true"] {
+    background: var(--bg-2);
+    border-color: var(--accent);
+    font-weight: 600;
+}
 
 /* =============================================================
    Acciones globales (barra inferior central)
    ============================================================= */
 .actions {
     position: fixed;
-    bottom: 24px;
+    /* En escritorio los 24px ya librarían cualquier barra de gestos, pero esta
+       regla también manda en una tablet —el corte del diseño móvil está en
+       768px— y ahí sí hay barras del sistema que esquivar. */
+    bottom: calc(24px + var(--safe-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
@@ -240,9 +419,12 @@ body {
    ============================================================= */
 .history-panel {
     position: fixed;
-    top: 70px;
-    right: 20px;
-    bottom: 90px;
+    /* Como en `.actions`: esta regla tambien manda en una tablet, donde si hay
+       barras del sistema. En apaisado el recorte de la camara se va a un
+       lateral y este panel esta pegado justo a ese borde. */
+    top: calc(70px + var(--safe-top, 0px));
+    right: calc(20px + var(--safe-right, 0px));
+    bottom: calc(90px + var(--safe-bottom, 0px));
     width: 262px;
     z-index: 10;
     background: var(--panel);
@@ -490,6 +672,92 @@ body {
    Tapa la pantalla entera a propósito: lo que pregunta es destructivo y no
    debe poder contestarse sin querer con un toque en el cubo de detrás.
    ============================================================= */
+/* =============================================================
+   Visita guiada
+   =============================================================
+
+   El truco de todo esto está en `.tour-focus`: NO hay ningún elemento que
+   pinte el velo. Lo pinta la SOMBRA de la propia ventanilla, con un radio de
+   difuminado cero y un ensanchado enorme. Así la sombra cubre la pantalla
+   entera y el único sitio que queda limpio es justo lo que el elemento tapa —
+   un agujero de verdad, sin máscaras ni SVG ni polígonos con la regla de
+   relleno al revés.
+
+   Y como la forma la decide el `border-radius` del elemento, señalar un rótulo
+   flotante —que es un disco— es cambiar una clase, no otro mecanismo.
+   ============================================================= */
+.tour {
+    position: fixed;
+    inset: 0;
+    /* Por encima del diálogo de confirmación, que va en 40. */
+    z-index: 50;
+}
+.tour[hidden] { display: none; }
+
+/* Esta capa se come los toques y por eso no hace falta desactivar ningún
+   botón: los controles de debajo son inalcanzables mientras dure la visita.
+   Desactivarlos además los pintaría atenuados justo mientras se explica para
+   qué sirven, que es el peor momento posible. */
+.tour-focus {
+    position: fixed;
+    border-radius: var(--radius-md);
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 9999px rgba(8, 10, 14, 0.72);
+    pointer-events: none;
+}
+/* Los rótulos flotantes son discos; un recuadro alrededor se ve mal. */
+.tour-focus.redondo { border-radius: 999px; }
+
+/* El cartel va al lado contrario del agujero —lo decide `tour.js` con la clase
+   `abajo`— para no tapar justo lo que está explicando.
+
+   Los `--safe-*` son los mismos que el resto de la interfaz: sin ellos, el
+   cartel arriba se metería debajo de la barra de estado, que es exactamente el
+   fallo que se corrigió en `barras-del-sistema`. */
+.tour-card {
+    position: fixed;
+    left: calc(16px + var(--safe-left, 0px));
+    right: calc(16px + var(--safe-right, 0px));
+    top: calc(16px + var(--safe-top, 0px));
+    margin: 0 auto;
+    max-width: 360px;
+    background: var(--bg-1);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 16px;
+}
+.tour-card.abajo {
+    top: auto;
+    bottom: calc(16px + var(--safe-bottom, 0px));
+}
+
+.tour-text {
+    margin: 0 0 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text);
+}
+.tour-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+/* La cuenta empuja los botones a la derecha. */
+.tour-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    margin-right: auto;
+}
+/* En móvil la regla de `.action-btn` reparte el ancho a partes iguales, que es
+   lo que necesita la barra de acciones y aquí deforma los dos botones. */
+.tour-actions .action-btn {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
 .confirm {
     position: fixed;
     inset: 0;
@@ -553,34 +821,34 @@ body {
     .topbar {
         flex-wrap: nowrap;
         gap: 6px;
-        padding: 10px 12px;
+        padding:
+            calc(10px + var(--safe-top, 0px))
+            calc(12px + var(--safe-right, 0px))
+            10px
+            calc(12px + var(--safe-left, 0px));
     }
     .brand { flex: 1 1 auto; min-width: 0; flex-wrap: wrap; }
-    .puzzle-select { font-size: 12px; padding: 4px 24px 4px 10px; }
+    .puzzle-btn { font-size: 12px; padding: 4px 8px; }
 
-    /* Seis botones no caben de ancho en un movil, y como la barra va centrada
-       con translateX(-50%) lo que sobra se corta por LOS DOS LADOS: se pierde
-       Undo por la izquierda y Solve por la derecha, que son justo los que se
-       buscan. Se limita al ancho de la pantalla y se desliza en horizontal,
-       igual que el selector de puzzles.
+    /* Seis botones no caben de ancho en un movil, y como la barra iba centrada
+       con translateX(-50%) lo que sobraba se cortaba por LOS DOS LADOS: se
+       perdia Undo por la izquierda y Solve por la derecha, que son justo los
+       que se buscan.
 
-       El `env(safe-area-inset-bottom)` es para los moviles con barra de gestos:
-       sin el, la fila se queda debajo de la raya del sistema y el ultimo boton
-       no se deja pulsar. */
-    /* La barra ocupa el ancho de la pantalla y los botones se lo reparten a
-       partes iguales. Centrada y del ancho de su contenido dejaba margenes
-       desiguales y obligaba a deslizar para llegar a Solve; asi cada boton cae
-       siempre en el mismo sitio, que es lo que el pulgar aprende.
+       Ahora la barra ocupa el ancho de la pantalla y los botones se lo reparten
+       a partes iguales, asi que cada boton cae siempre en el mismo sitio, que
+       es lo que el pulgar aprende.
 
-       El `env(safe-area-inset-bottom)` es para los moviles con barra de gestos:
-       sin el, la fila se queda debajo de la raya del sistema y el ultimo boton
-       no se deja pulsar. */
+       Los `--safe-*` son las franjas del sistema: sin ellos la fila se queda
+       debajo de la raya de gestos y el ultimo boton no se deja pulsar, y en
+       apaisado esa raya se va a un lateral y se lleva por delante Undo o Solve
+       segun hacia donde se haya girado el telefono. */
     .actions {
-        left: 6px;
-        right: 6px;
+        left: calc(6px + var(--safe-left, 0px));
+        right: calc(6px + var(--safe-right, 0px));
         transform: none;
         max-width: none;
-        bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(8px + var(--safe-bottom, 0px));
         gap: 4px;
         padding: 5px;
     }
@@ -602,10 +870,10 @@ body {
        el puzzle entero. */
     .history-panel {
         top: auto;
-        left: 6px;
-        right: 6px;
+        left: calc(6px + var(--safe-left, 0px));
+        right: calc(6px + var(--safe-right, 0px));
         width: auto;
-        bottom: calc(12px + var(--bar-actions) + env(safe-area-inset-bottom, 0px));
+        bottom: calc(12px + var(--bar-actions) + var(--safe-bottom, 0px));
         max-height: 40vh;
         z-index: 10;
     }
@@ -621,7 +889,7 @@ body {
        tira que vive sobre la barra de acciones. */
     .history-panel[data-collapsed="true"] {
         top: auto;
-        bottom: calc(12px + var(--bar-actions) + env(safe-area-inset-bottom, 0px));
+        bottom: calc(12px + var(--bar-actions) + var(--safe-bottom, 0px));
     }
 
     .history-header { padding: 8px 10px; }
@@ -665,4 +933,88 @@ body {
 @media (max-width: 480px) {
     .action-btn .ico { display: none; }
     .action-btn .lbl { margin: 0; }
+}
+
+/* ------------------------------------------------------------
+   El selector de idioma
+
+   Un botón redondo con la bandera puesta, y un menú de cuatro que se descuelga
+   debajo. Reutiliza `.icon-btn` entero: el tamaño, el borde y el foco son los
+   mismos que los del altavoz y la ayuda, porque es un hermano suyo.
+
+   Las banderas son SVG y no emoji. Windows no pinta los indicadores regionales
+   —salen dos letras sueltas donde debería ir la bandera— y la web se abre desde
+   escritorio.
+   ----------------------------------------------------------*/
+.lang { position: relative; display: inline-flex; flex: 0 0 auto; }
+
+/* Sin relleno: la bandera ocupa el botón entero, como una moneda. */
+.lang-btn { overflow: hidden; }
+.lang-btn .flag,
+.lang-menu .flag {
+    display: block;
+    line-height: 0;
+}
+.lang-btn .flag { width: 100%; height: 100%; }
+.lang-btn .flag svg {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    /* La bandera es rectangular y el botón redondo: se agranda para que el
+       recorte no deje esquinas del fondo a la vista. */
+    transform: scale(1.5);
+}
+
+.lang-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    /* Anclado a la derecha: el botón vive cerca del borde de la cabecera, y
+       colgando por la izquierda el menú se saldría de la pantalla en un móvil. */
+    right: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.lang-menu[hidden] { display: none; }
+
+.lang-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    /* 34px de alto: aquí sí, porque a diferencia del altavoz esto es una lista
+       de cuatro y elegir mal cuesta volver a abrirla. */
+    padding: 7px 10px;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    text-align: left;
+}
+.lang-option:hover { background: var(--bg-2); }
+.lang-option:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.lang-option .flag svg {
+    width: 20px; height: 14px;
+    border-radius: 2px;
+    /* Un contorno tenue: la bandera francesa tiene una franja blanca que sobre
+       el panel oscuro se comería el borde. */
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+/* El que está puesto. `aria-checked` es la única verdad: de ahí sale el aspecto
+   y eso mismo es lo que anuncia un lector de pantalla. */
+.lang-option[aria-checked="true"] {
+    background: var(--bg-2);
+    border-color: var(--accent);
+    font-weight: 600;
 }

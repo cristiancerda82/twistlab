@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Twistlab — Rubik's Cube and 7 more twisty puzzles, in your browser</title>
+    <title>Twistlab — Rubik's Cube and more twisty puzzles</title>
     <meta name="description" content="Twist a 3×3×3, a 4×4×4, a Pyraminx, a Megaminx and more in 3D. Drag a sticker to turn a layer, and let the solver walk the puzzle home move by move." />
-    <link rel="stylesheet" href="styles.css?v=daeb825d" />
+    <link rel="stylesheet" href="styles.css?v=d647fc55" />
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
     <!-- Tarjeta al compartir el enlace. `og:url` y `og:image` tienen que ser
@@ -30,31 +30,96 @@
 </head>
 <body>
     <!-- Canvas 3D a pantalla completa -->
-    <canvas id="cube-canvas" aria-label="3D puzzle"></canvas>
+    <canvas id="cube-canvas" aria-label="3D puzzle" data-t-aria="canvas.aria"></canvas>
 
     <!-- Cabecera: título + selector de puzzle -->
     <header class="topbar">
         <div class="brand">
-            <span class="logo">▣</span>
+            <!-- El logo no es adorno: devuelve el puzzle a su tamaño y a su
+                 postura de partida. Es un `button` y no un `span` con un
+                 manejador encima porque un span no recibe foco, no responde al
+                 teclado y un lector de pantalla no lo anuncia como pulsable.
+
+                 A la vista es el mismo cuadrado de siempre, en el mismo sitio y
+                 del mismo color: la cabecera ya va apretada y no necesita
+                 parecer que tiene un control más. -->
+            <button id="btn-encuadrar" class="logo" data-always-on="true"
+                    data-t-title="encuadrar.title" title="Fit the puzzle back on screen">
+                <span aria-hidden="true">▣</span>
+                <span class="sr-only" data-t="encuadrar.sr">Fit the puzzle on screen</span>
+            </button>
             <span class="title">Twistlab</span>
             <!-- Puntos por puzzles resueltos a mano. Estaba solo en un mensaje
                  que duraba dos segundos: nadie se enteraba de que existían. -->
-            <span class="score" id="score" title="Points you earned yourself, turn by turn">0 pts</span>
+            <span class="score" id="score" data-t-title="puntos.title"
+                  title="Points you earned yourself, turn by turn">0 pts</span>
             <!-- El selector de puzzle, al lado de los puntos. Fue una botonera
                  de ocho, y en el movil se llevaba una fila entera de la
                  cabecera: treinta pixeles de alto que ahora son del puzzle.
                  Una lista desplegable dice lo mismo en el sitio de un boton. -->
-            <select id="puzzle-select" class="puzzle-select" data-always-on="true"
-                    aria-label="Puzzle type" title="Choose the puzzle">
-                <option value="cuboid221">2×2×1</option>
-                <option value="cube2">2×2×2</option>
-                <option value="cuboid331">3×3×1</option>
-                <option value="cube3">3×3×3</option>
-                <option value="cube4">4×4×4</option>
-                <option value="cube5">5×5×5</option>
-                <option value="pyraminx">Pyraminx</option>
-                <option value="megaminx">Megaminx</option>
-            </select>
+            <!-- El selector de puzzle. Fue una botonera de ocho, luego una
+                 lista del sistema, y ahora un menú propio — por una razón
+                 concreta: **un `select` no puede llevar imágenes dentro de sus
+                 opciones en ningún navegador**, y sin imagen «Megaminx» no le
+                 dice nada a quien no lo conoce.
+
+                 Lo que se pierde es el selector nativo de Android, que en un
+                 móvil es cómodo. Se acepta a cambio de poder ver cuál es cada
+                 uno antes de elegirlo, que con una partida empezada cuesta un
+                 diálogo de confirmación.
+
+                 Las opciones las monta `main.js` desde la lista de puzzles:
+                 escribirlas aquí obligaría a tocar dos ficheros para añadir el
+                 noveno. -->
+            <div class="puzzle" id="puzzle">
+                <button id="btn-puzzle" class="puzzle-btn" data-always-on="true"
+                        data-t-title="puzzle.title" title="Choose the puzzle"
+                        aria-haspopup="true" aria-expanded="false">
+                    <span class="pzico" id="puzzle-ico" aria-hidden="true"></span>
+                    <span class="pzname" id="puzzle-nombre"></span>
+                    <span class="pzchevron" aria-hidden="true"></span>
+                </button>
+                <div class="puzzle-menu" id="puzzle-menu" role="menu" hidden
+                     data-t-aria="puzzle.aria" aria-label="Puzzle type"></div>
+            </div>
+            <!-- Silenciar. Va aquí y no en la barra de acciones porque allí los
+                 seis botones ya van apretados —a 320px se les quitan hasta los
+                 emoji— y porque callar el juego es una acción rara: no necesita
+                 estar donde llega el pulgar. `data-always-on` para poder
+                 silenciarlo MIENTRAS el solucionador está resolviendo, que es
+                 justo cuando a uno le entran ganas. -->
+            <button id="btn-sound" class="icon-btn sound-toggle" data-always-on="true"
+                    aria-pressed="true" title="Turn the turning sound on or off">
+                <span class="ico" aria-hidden="true">🔊</span>
+                <span class="sr-only" data-t="sonido.sr">Sound</span>
+            </button>
+            <!-- Volver a ver la visita guiada. Al lado del altavoz por lo mismo
+                 que él: la barra de acciones no tiene sitio, y pedir ayuda es
+                 una acción rara que no necesita estar bajo el pulgar. -->
+            <button id="btn-help" class="icon-btn" data-always-on="true"
+                    data-t-title="ayuda.title" title="Watch the guided tour again">
+                <span class="ico" aria-hidden="true">❔</span>
+                <span class="sr-only" data-t="ayuda.sr">Guided tour</span>
+            </button>
+            <!-- El idioma. Junto al altavoz y a la ayuda por lo mismo que ellos:
+                 la barra de acciones no tiene sitio, y cambiar de idioma es una
+                 acción rara que no necesita estar bajo el pulgar.
+
+                 El menú lo monta `main.js` desde la lista de idiomas: escribir
+                 aquí las cuatro banderas obligaría a tocar dos ficheros para
+                 añadir el quinto. Va con `data-always-on` para poder cambiar de
+                 idioma MIENTRAS el solucionador trabaja, que es cuando más rato
+                 se pasa uno leyendo lo que dice. -->
+            <div class="lang" id="lang">
+                <button id="btn-lang" class="icon-btn lang-btn" data-always-on="true"
+                        data-t-title="idioma.title" title="Choose the language"
+                        aria-haspopup="true" aria-expanded="false">
+                    <span class="flag" id="lang-flag" aria-hidden="true"></span>
+                    <span class="sr-only" data-t="idioma.sr">Language</span>
+                </button>
+                <div class="lang-menu" id="lang-menu" role="menu" hidden
+                     data-t-aria="idioma.aria" aria-label="Language"></div>
+            </div>
             <!-- El cronometro mientras se resuelve, y las marcas del puzzle
                  cuando no: mejor tiempo y media de 5, como en cualquier
                  cronometro de cubos. -->
@@ -66,23 +131,24 @@
 
 
     <!-- Acciones globales (esquina inferior centro) -->
-    <div class="actions" role="toolbar" aria-label="Actions">
-        <button id="btn-undo"     class="action-btn" title="Undo (Ctrl+Z)"><span class="ico" aria-hidden="true">↶</span><span class="lbl">Undo</span></button>
-        <button id="btn-redo"     class="action-btn" title="Redo (Ctrl+Y)"><span class="ico" aria-hidden="true">↷</span><span class="lbl">Redo</span></button>
-        <button id="btn-labels"   class="action-btn" title="Show or hide the floating move buttons" aria-pressed="true"><span class="ico" aria-hidden="true">🏷</span><span class="lbl">Moves</span></button>
-        <button id="btn-reset"    class="action-btn" title="Back to a solved puzzle"><span class="ico" aria-hidden="true">⟲</span><span class="lbl">Reset</span></button>
-        <button id="btn-shuffle"  class="action-btn" title="Scramble the puzzle"><span class="ico" aria-hidden="true">🎲</span><span class="lbl">Scramble</span></button>
-        <button id="btn-solve"    class="action-btn primary" title="Solve the puzzle"><span class="ico" aria-hidden="true">✨</span><span class="lbl">Solve</span></button>
+    <div class="actions" role="toolbar" data-t-aria="acciones.aria" aria-label="Actions">
+        <button id="btn-undo"     class="action-btn" data-t-title="deshacer.title" title="Undo (Ctrl+Z)"><span class="ico" aria-hidden="true">↶</span><span class="lbl" data-t="deshacer.lbl">Undo</span></button>
+        <button id="btn-redo"     class="action-btn" data-t-title="rehacer.title" title="Redo (Ctrl+Y)"><span class="ico" aria-hidden="true">↷</span><span class="lbl" data-t="rehacer.lbl">Redo</span></button>
+        <button id="btn-labels"   class="action-btn" data-t-title="rotulos.title" title="Show or hide the floating move buttons" aria-pressed="true"><span class="ico" aria-hidden="true">🏷</span><span class="lbl" data-t="rotulos.lbl">Moves</span></button>
+        <button id="btn-reset"    class="action-btn" data-t-title="reiniciar.title" title="Back to a solved puzzle"><span class="ico" aria-hidden="true">⟲</span><span class="lbl" data-t="reiniciar.lbl">Reset</span></button>
+        <button id="btn-shuffle"  class="action-btn" data-t-title="mezclar.title" title="Scramble the puzzle"><span class="ico" aria-hidden="true">🎲</span><span class="lbl" data-t="mezclar.lbl">Scramble</span></button>
+        <button id="btn-solve"    class="action-btn primary" data-t-title="resolver.title" title="Solve the puzzle"><span class="ico" aria-hidden="true">✨</span><span class="lbl" data-t="resolver.lbl">Solve</span></button>
     </div>
 
     <!-- Historial. En escritorio es un panel a la derecha; en el móvil, una
          tira que se desliza por encima de la barra de acciones. El mismo
          marcado para los dos: lo que cambia es el CSS. -->
-    <aside class="history-panel" id="history-panel" aria-label="Move history">
+    <aside class="history-panel" id="history-panel"
+           data-t-aria="historial.aria" aria-label="Move history">
         <button class="history-header" id="history-toggle" data-always-on="true"
                 aria-expanded="true" aria-controls="history-body"
-                title="Show / hide the move history">
-            <h2 class="panel-title">History</h2>
+                data-t-title="historial.title" title="Show / hide the move history">
+            <h2 class="panel-title" data-t="historial.titulo">History</h2>
             <span id="history-count" class="history-count">0 / 0</span>
             <span class="history-chevron" aria-hidden="true"></span>
         </button>
@@ -91,7 +157,7 @@
                 <div class="history-progress-fill" id="history-progress"></div>
             </div>
             <div id="history-list" class="history-list" role="list"></div>
-            <p class="history-empty" id="history-empty">
+            <p class="history-empty" id="history-empty" data-t="historial.vacio">
                 Turn the puzzle — every move lands here, and you can tap one to travel back.
             </p>
         </div>
@@ -109,13 +175,34 @@
              aria-labelledby="confirm-text">
             <p class="confirm-text" id="confirm-text"></p>
             <div class="confirm-actions">
-                <button id="confirm-no"  class="action-btn" data-always-on="true">Cancel</button>
+                <button id="confirm-no"  class="action-btn" data-always-on="true"
+                        data-t="confirmar.cancelar">Cancel</button>
                 <button id="confirm-yes" class="action-btn primary" data-always-on="true">Reset</button>
             </div>
         </div>
     </div>
 
+    <!-- Visita guiada a los controles. Sale sola la primera vez y se repite
+         desde el botón de la cabecera.
+
+         El velo NO se pinta aquí: lo pinta la sombra de `#tour-focus`, que es
+         un agujero de verdad recortado sobre el control del paso. Ver
+         `styles.css`. Arranca oculto, como el diálogo de confirmación. -->
+    <div id="tour" class="tour" hidden>
+        <div id="tour-focus" class="tour-focus" aria-hidden="true"></div>
+        <div id="tour-card" class="tour-card" role="dialog" aria-modal="true"
+             aria-labelledby="tour-text">
+            <p class="tour-text" id="tour-text"></p>
+            <div class="tour-actions">
+                <span class="tour-count" id="tour-count"></span>
+                <button id="tour-skip" class="action-btn" data-always-on="true"
+                        data-t="visita.saltar">Skip</button>
+                <button id="tour-next" class="action-btn primary" data-always-on="true">Next</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Punto de entrada como módulo ES6 -->
-    <script type="module" src="app.O44UNWMP.js"></script>
+    <script type="module" src="app.PFNE6WEH.js"></script>
 </body>
 </html>
